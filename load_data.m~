@@ -1,0 +1,51 @@
+pathname = '/Users/mschoder/Dropbox (MIT)/Fall 2019/2.884 - Process Data ML/Final Project/pda_final_proj/matlab_data/';
+MyFolderInfo = dir([pathname, '*.csv']);
+
+colnames = ["spool", "diameter", "speed", "motorV", "extfrq", "target", "temp"];
+xcols = ["spool", "speed", "motorV", "extfrq", "target", "temp"];
+expNames = [];
+expTimes = [];
+
+for flscnt = 1:length(MyFolderInfo)
+    % filenames and timestamps
+    fname = MyFolderInfo(flscnt).name;
+    expName = convertCharsToStrings(fname(1:10));
+    expNames = [expNames expName];
+    ts = convertCharsToStrings(fname(12:end-4));
+    expTimes = [expTimes ts];
+    
+    % datasets & cleaning
+    d0 = csvread([pathname fname],1,0);
+    d = d0(:,2:end); % Ignore step data column 1
+    d = d(101:end, :); % Cut out first 100 samples from each dataframe (bad startup behavior)
+    
+    % feature generation here
+    
+    
+    % x,y parse and store as iddata object by experiment
+    diam = d(:,2);
+    xdata = d(:,[1 3 4 5 6 7]);
+    new_dat = iddata(diam,xdata,0.25);
+    
+    
+    
+    if flscnt == 1
+        data = new_dat;
+    else
+        data = merge(data, new_dat);
+    end
+end
+
+data.InputName = xcols;
+data.OutputName = 'diameter';
+data.exp = expNames;
+
+%% Train Test Split (same as python notebook)
+% Aims for an 80-20% split and reasonable mix of explore & exploit
+trainData = getexp(data, [1,3,5,6,7,9,10,11,12,14,15]);
+testData = getexp(data, [2,4,8,13]);
+
+
+
+
+
